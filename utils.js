@@ -11,7 +11,7 @@ function getOdds(odds) {
   for (let odd in odds) {
     o = odds[odd];
     if (o.odd_name == "Fulltime Result") {
-      // console.log(o);
+      // //console.log(o);
       switch (o.type) {
         case "Home":
           res.home = o.value;
@@ -24,11 +24,12 @@ function getOdds(odds) {
       }
     }
   }
+  // console.log("odds",res)
   return res;
 }
 
 function getWinner(home, away) {
-  // console.log(home.score, away.score);
+  // //console.log(home.score, away.score);
   if (parseInt(home.score) > parseInt(away.score)) {
     return home.id;
   } else if (parseInt(home.score) < parseInt(away.score)) {
@@ -61,21 +62,20 @@ async function getLogos(matchId) {
 
 async function getCurrentMatchInfo(matchId) {
   try {
+    //console.log("received",matchId)
     res = {};
     const parameters = {
       match_id: matchId,
       action: "get_live_odds_commnets",
       APIkey: process.env.API_KEY,
     };
-    // data = (await axios.get(
-    //   URL + "?" + new URLSearchParams(parameters).toString()).data
-    // )[parameters.match_id];
     let data = (
       await axios.get(URL + "?" + new URLSearchParams(parameters).toString())
     ).data[parameters.match_id];
+    // console.log(data)
     odds = getOdds(data.live_odds);
     logos = await getLogos(matchId);
-    console.log(logos);
+    // //console.log(logos);
     homeTeam = {
       name: data.match_hometeam_name,
       logo: logos[0],
@@ -91,6 +91,7 @@ async function getCurrentMatchInfo(matchId) {
       id: data.match_awayteam_id,
     };
     match = {
+      id: data.match_id,
       started: true,
       finished: false,
       time: data.match_status,
@@ -98,7 +99,7 @@ async function getCurrentMatchInfo(matchId) {
       league: data.league_name,
     };
     res = { match, homeTeam, awayTeam };
-    console.log(res);
+    // //console.log(res);
     return res;
   } catch (err) {
     console.log(err);
@@ -160,7 +161,7 @@ async function getNextMatch(teamId) {
     let data = (
       await axios.get(URL + "?" + new URLSearchParams(parameters).toString())
     ).data[0];
-    console.log(data);
+    // //console.log(data);
     homeTeam = {
       name: data.match_hometeam_name,
       logo: data.team_home_badge,
@@ -220,7 +221,7 @@ async function getLastMatches(teamId) {
     let data = (
       await axios.get(URL + "?" + new URLSearchParams(parameters).toString())
     ).data;
-    console.log(data);
+    //console.log(data);
     //if next match has started, get current match info
     lastMatches = data.slice(Math.max(data.length - 5, 0)).reverse();
     for (let i = 0; i < lastMatches.length; i++) {
@@ -281,6 +282,19 @@ async function getLastMatches(teamId) {
   }
 }
 
+async function threeOdds(teamId){
+  nextMatch = await getNextMatch(teamId);
+  console.log(nextMatch)
+  if (nextMatch.match.started) {
+    currentMatch = await getCurrentMatchInfo((nextMatch.match.id).toString());
+    console.log(currentMatch)
+    return {match_id:currentMatch.match.id,home: currentMatch.homeTeam.victoryOdd, away: currentMatch.awayTeam.victoryOdd, draw: currentMatch.match.drawOdd};
+  }
+  else{
+    return "The next match of this team has not started yet.";
+  }
+}
+
 async function getTeamInfo(teamId) {
   const parameters = {
     action: "get_teams",
@@ -292,13 +306,14 @@ async function getTeamInfo(teamId) {
   return res;
 }
 
-// getNextMatch(1060).then((res) => console.log(res));
-// getFinishedMatchInfo(1029890).then((res) => console.log(res));
-// getCurrentMatchInfo(1054210).then((res) => console.log(res));
-// getCurrentMatchInfo(1006149).then((res) => console.log(res));
+// getNextMatch(1060).then((res) => //console.log(res));
+// getFinishedMatchInfo(1029890).then((res) => //console.log(res));
+// getCurrentMatchInfo(1054210).then((res) => //console.log(res));
+// getCurrentMatchInfo(1006149).then((res) => //console.log(res));
 module.exports = {
   getCurrentMatchInfo,
   getFinishedMatchInfo,
   getNextMatch,
   getLastMatches,
+  threeOdds
 };

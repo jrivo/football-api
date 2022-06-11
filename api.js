@@ -38,4 +38,11 @@ app.get("/getLastMatches/:teamId", (req, res) => {
   });
 });
 
+app.get("/getOdds/:teamId", (req, res) => {
+  utils.threeOdds(req.params.teamId).then((response) => {
+    res.set("Access-Control-Allow-Origin", "*");
+    res.send(response);
+  });
+})
+
 app.listen(port, () => console.log(`Listening on port + ${port}!`));
